@@ -56,7 +56,7 @@ router.post('/login', async (req, res) => {
 
     // Generate and send a token
     const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY);
-    res.status(200).json({ token, username: user.username });
+    res.status(200).json({ token, username: user.username , followingCount: user.followingCount, followerCount:user.followerCount });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
   }
@@ -77,20 +77,23 @@ router.get('/', async (req, res) => {
 router.get('/:username', async (req, res) => {
   try {
     const { username } = req.params;
-    console.log(req.params);
-    const user = await User.findOne({ username: { $regex: new RegExp('^' + username + '$', 'i') } }, 'username email');
-    console.log('Username parameter:', username);
+
+    const user = await User.findOne(
+      { username: { $regex: new RegExp('^' + username + '$', 'i') } },
+      'username email followerCount followingCount'
+    );
 
     if (!user) {
       return res.status(404).json({ message: `User with username '${username}' not found` });
     }
-    
+
     res.status(200).json({ user });
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 router.get('/:username/images', async (req, res) => {
 
