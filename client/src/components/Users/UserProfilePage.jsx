@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
 import Header from '../Header';
+import { useParams } from 'react-router-dom';
 
-const UserProfilePage = () => {
+function UserProfile() {
   const { username } = useParams();
   const [user, setUser] = useState(null);
   const [images, setImages] = useState([]);
@@ -12,13 +12,9 @@ const UserProfilePage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/auth/${username}`);
-        console.log(response.data);
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/auth/${username}`);
         setUser(response.data.user);
-        // Check if the current user is already following this user
-        // You need to implement this endpoint on your backend
-        const followDataResponse = await axios.get(`http://localhost:5000/user/followData/${username}`);
-        setIsFollowing(followDataResponse.data.isFollowing);
+        console.log(response.data.user);
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
@@ -26,7 +22,7 @@ const UserProfilePage = () => {
 
     const fetchUserImages = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/auth/${username}/images`);
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/auth/${username}/images`);
         setImages(response.data.images);
       } catch (error) {
         console.error('Error fetching user images:', error);
@@ -38,19 +34,25 @@ const UserProfilePage = () => {
   }, [username]);
 
   const handleFollow = async () => {
+    console.log(user._id);
     try {
-      // Toggle follow status by sending a POST request to follow/unfollow endpoint
-      const response = await axios.post(`http://localhost:5000/user/${isFollowing ? 'unfollow' : 'follow'}`, {
-        username: user.username // Assuming you need to send the username of the user to follow/unfollow
-      });
-      setIsFollowing(!isFollowing); // Update local state after successful follow/unfollow
+      if (isFollowing) {
+        // Unfollow user
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/${user.username}/unfollow`);
+        setIsFollowing(false);
+      } else {
+        // Follow user
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/${user.username}/follow`);
+        setIsFollowing(true);
+      }
     } catch (error) {
-      console.error('Error toggling follow status:', error);
+      console.error('Error following/unfollowing user:', error);
     }
   };
+  
 
   if (!user) {
-    return <p>Loading...</p>;
+    return <div>Loading...</div>;
   }
 
   return (
@@ -59,36 +61,34 @@ const UserProfilePage = () => {
       <div className="container mx-auto mt-8">
         <h1 className="text-2xl font-semibold mb-4">{user.username}'s Public Profile</h1>
         <div className="flex justify-between items-center mb-4">
-            <span className="text-gray-500">Followers: {user.followerCount}</span>
-            <span className="text-gray-500">Following: {user.followingCount}</span>
-          </div>
+          <span className="text-gray-500">Followers: {user.followerCount}</span>
+          <span className="text-gray-500">Following: {user.followingCount}</span>
+        </div>
         <button
-                onClick={handleFollow}
-                style={{
-                backgroundColor: '#2471A3',
-                color: 'white',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.5rem',
-                border: '2px solid #1E40AF',
-                cursor: 'pointer',
-                transition: 'background-color 0.3s ease',
-  }}
->
-                     {isFollowing ? 'Unfollow' : 'Follow'}
-              </button>
+          onClick={handleFollow}
+          style={{
+            backgroundColor: '#2471A3',
+            color: 'white',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.5rem',
+            border: '2px solid #1E40AF',
+            cursor: 'pointer',
+            transition: 'background-color 0.3s ease',
+          }}
+        >
+          {isFollowing ? 'Unfollow' : 'Follow'}
+        </button>
         <h2 className="text-xl font-semibold mb-4">Uploaded Images</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {images.map((image) => (
             <div key={image._id} className="shadow-xl relative overflow-hidden flex items-center justify-center">
-              {/* Display image or other details */}
-              <img src={`http://localhost:5000/uploads/${image.filename}`} alt={`Uploaded by ${user.username}`} className=" object-cover object-center transition-transform transform hover:scale-105 " />
-              {/* Add more details or actions if needed */}
+              <img src={`${process.env.REACT_APP_BACKEND_URL}/uploads/${image.filename}`} alt={`Uploaded by ${user.username}`} className="object-cover object-center transition-transform transform hover:scale-105" />
             </div>
           ))}
         </div>
       </div>
     </>
   );
-};
+}
 
-export default UserProfilePage;
+export default UserProfile;

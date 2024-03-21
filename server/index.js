@@ -17,22 +17,26 @@ app.use(bodyParser.json());
 app.use(cors());
 const authRoutes = require('./routes/auth');
 const imageRoutes = require('./routes/image');
-const followerRoutes = require('./routes/follow');
+
+const uri = 'mongodb://localhost:27017/memories';
+
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-if(mongoose){
-    console.log("MongoDB Connected");
-}
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('Connected to MongoDB');
+    // Further code logic goes here
+  })
+  .catch(error => {
+    console.error('Error connecting to MongoDB:', error);
+  }); console.log("MongoDB Connected");
+
 
 // Create MongoDB models (models/User.js and models/Image.js)
 
 // API Routes (routes/auth.js and routes/image.js)
 app.use('/auth', authRoutes);
 app.use('/image', imageRoutes);
-app.use('/user',  followerRoutes);
+
 // Serve static images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
